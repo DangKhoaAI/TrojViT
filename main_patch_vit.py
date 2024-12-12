@@ -128,7 +128,7 @@ def get_aug():
     parser.add_argument('--log_dir', default='log', type=str)
     parser.add_argument('--crop_size', default=224, type=int)
     parser.add_argument('--img_size', default=224, type=int)
-    parser.add_argument('--workers', default=16, type=int)
+    parser.add_argument('--workers', default=4, type=int)
     parser.add_argument('--device', default='cuda',
                         help='device to use for training / testing')
     parser.add_argument('--network', default='ViT', type=str, choices=['DeiT-B', 'DeiT-S', 'DeiT-T','ViT',
@@ -389,6 +389,7 @@ def main():
     scheduler_p = torch.optim.lr_scheduler.StepLR(opt, step_size=args.step_size, gamma=args.gamma)
 #KỸ THUẬT TẤN CÔNG SỐ 2: attention target loss (nếu dùng attention ) và mod
 # Mô hình sẽ bị tấn công qua việc cập nhật delta sao cho mô hình phân loại sai với ảnh đã bị tấn công.
+    print("Round 1:train on attention target loss ")
     for train_iter_num in range(args.train_attack_iters):
         # : Khởi tạo lại gradient về 0 trước mỗi vòng lặp huấn luyện để tránh tích lũy gradient từ các vòng lặp trước đó.#
         model.zero_grad()
@@ -492,7 +493,7 @@ def main():
         delta.data = clamp(delta, (0 - mu) / std, (1 - mu) / std)
         '''
         if train_iter_num%10==0:
-            print("Round 1:train on target loss ")
+            print('Train Iteration:', train_iter_num)
             test_patch_tri(model,loader_test,max_patch_index,mask,delta)
             test(model,loader_test)
     #TEST (trên toàn tập val)  SAU KHI SỬ DỤNG KỸ THUẬT TRAIN SỐ 2  train 
@@ -521,6 +522,7 @@ def main():
 
     
     ### training with clear image and triggered image
+    print("Round 2: Train on parameter distillation:")
     for epoch in range(args.epoch):
         scheduler.step()
         print('Starting epoch %d / %d' % (epoch + 1, 50))
@@ -585,7 +587,7 @@ def main():
         if (epoch+1)%10==0:
             #torch.save(model.state_dict(), 'model_final_trojan.pkl')    ## saving the trojaned model
             #test_patch_tri_2(model,loader_test,max_patch_index,mask,delta)
-            print("Round 2: Train on parameter distillation:")
+            print("Epoch:",epoch)
             test_patch_tri(model,loader_test,max_patch_index,mask,delta) #test trigger output trên toàn tập var
             test(model,loader_test) #test clean output trên toàn tập val
     
