@@ -11,11 +11,11 @@ from timm import create_model
 from models.DeiT import deit_base_patch16_224, deit_tiny_patch16_224, deit_small_patch16_224
 from utils import  get_loaders_test,get_loaders_test_small,get_loaders, my_logger, my_meter, PCGrad
 #my_logger và my_meter không dùng
-#get_loaders_test_small is not used 
+#get_loaders_test_small không dùng
 #PCGrad: tránh mâu thuẫn gradient hàm loss
 #ham get_loaders lấy 384 mẫu dữ liệu
 #hàm get_loaders_test lấy full dữ liệu val
-
+import torchvision.models as models #import resnet models
 import scipy
 import torchvision.datasets as datasets
 import torchvision.transforms as transforms
@@ -156,7 +156,7 @@ def get_aug():
     parser.add_argument('--gamma', default=0.95, type=float)
 
     parser.add_argument('--seed', default=18, type=int, help='Random seed')
-    #ARGUMENT SỐ EPOCH ĐƯỢC TRAIN
+    #ARGUMENT SỐ EPOCH ĐƯỢC TRAINc
     parser.add_argument('--epoch',default=50,type=int,help='Số epoch train bằng kỹ thuật số 3 trên tòan tập VAL')
     args = parser.parse_args()
 
@@ -187,9 +187,9 @@ def main():
     filter_patch = torch.ones([1, 3, patch_size, patch_size]).float().cuda()
 
     if args.network == 'ResNet152':
-        model = ResNet152(pretrained=True)
+        model = models.resnet152(pretrained=True)
     elif args.network == 'ResNet50':
-        model = ResNet50(pretrained=True)
+        model = models.resnet50(pretrained=True)
     elif args.network == 'ResNet18':
         model = torchvision.models.resnet18(pretrained=True)  
     elif args.network == 'VGG16':
@@ -381,7 +381,7 @@ def main():
     #chuẩn bị dữ liệu và nhiễu
     x_p = x_p.cuda()
     delta = (torch.rand_like(x_p) - mu) / std
-    delta.data = clamp(delta, (0 - mu) / std, (1 - mu) / std)
+    delta.data = torch.clamp(delta, (0 - mu) / std, (1 - mu) / std)
     delta.requires_grad = True
     original_img = x_p.clone()
 
