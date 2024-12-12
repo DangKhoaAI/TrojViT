@@ -493,7 +493,7 @@ def main():
         '''
         if train_iter_num%10==0:
             print("Round 1:train on target loss ")
-            test_patch_tri(model,loader_test,max_patch_index_matrix,delta)
+            test_patch_tri(model,loader_test,max_patch_index_matrix,mask,delta)
             test(model,loader_test)
     #TEST (trên toàn tập val)  SAU KHI SỬ DỤNG KỸ THUẬT TRAIN SỐ 2  train 
     print("Round 1 done")
